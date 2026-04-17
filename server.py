@@ -4,16 +4,28 @@ import pylint.lint
 
 app = Flask(__name__)
 
-@app.route("/emotionDetector", methods=["POST"])
-def detect_emotion():
-    data = request.get_json()
-    text = data.get("text", "")
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({
+        "message": "Emotion detector is running. Use POST /emotionDetector with JSON body: {'text': 'your text'}"
+    })
+
+@app.route("/emotionDetector", methods=["GET", "POST"])
+def emotion_detect():
+    if request.method == "GET":
+        return "Method not allowed for direct browser call. Use POST with form data: text=your sentence."
+
+    text = request.form["text"]
 
     if not text.strip():
-        return jsonify({"error": "Invalid input! Text cannot be empty."}), 400
+        return "Invalid input! Please enter some text."
 
     result = emotion_detector(text)
-    return jsonify(result)
+    
+    if result["dominant_emotion"] is None:
+        return "Invalid input! Please try again."
+
+    return result
 
 if __name__ == "__main__":
     app.run(debug=True)
